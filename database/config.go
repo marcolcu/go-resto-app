@@ -1,42 +1,41 @@
 package database
 
 import (
-	"fmt"
-	"os"
+    "fmt"
+    "os"
 
-	"github.com/joho/godotenv"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+    "github.com/joho/godotenv"
+    "gorm.io/driver/mysql"
+    "gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
 func ConnectDB() {
-	var err error
+    var err error
 
-	// Load .env file
-	err = godotenv.Load()
-	if err != nil {
-		panic("Error loading .env file")
-	}
+    // Load .env file
+    err = godotenv.Load()
+    if err != nil {
+        panic("Error loading .env file")
+    }
 
-	// Ambil konfigurasi dari environment variables
-	host := os.Getenv("DB_HOST")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
-	port := os.Getenv("DB_PORT")
-	sslmode := os.Getenv("DB_SSLMODE")
-	timezone := os.Getenv("DB_TIMEZONE")
+    // Ambil konfigurasi dari environment variables
+    user := os.Getenv("MYSQLUSER")
+    password := os.Getenv("MYSQLPASSWORD")
+    host := os.Getenv("MYSQLHOST")
+    port := os.Getenv("MYSQLPORT")
+    dbname := os.Getenv("MYSQLDATABASE")
 
-	// Format DSN menggunakan environment variables
-	DSN := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
-		host, user, password, dbname, port, sslmode, timezone)
+    // Format DSN menggunakan environment variables
+    DSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+        user, password, host, port, dbname)
 
-	DB, err = gorm.Open(postgres.Open(DSN), &gorm.Config{})
-	if err != nil {
-		panic("Can't connect to database")
-	}
+    // Membuka koneksi ke database
+    DB, err = gorm.Open(mysql.Open(DSN), &gorm.Config{})
+    if err != nil {
+        panic("Can't connect to database")
+    }
 
-	fmt.Println("Connected to database")
+    fmt.Println("Connected to database")
 }
