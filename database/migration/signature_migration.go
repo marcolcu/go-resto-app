@@ -2,8 +2,9 @@ package migration
 
 import (
 	"fmt"
-	"github.com/Fabian832/Go-Fiber/database"
-	"github.com/Fabian832/Go-Fiber/models/entity"
+
+	"github.com/marcolcu/go-resto-app/database"
+	"github.com/marcolcu/go-resto-app/models/entity"
 )
 
 func RunSignatureMigrate() {

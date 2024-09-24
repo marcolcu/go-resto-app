@@ -3,8 +3,8 @@ package migration
 import (
 	"fmt"
 
-	"github.com/Fabian832/Go-Fiber/database"
-	"github.com/Fabian832/Go-Fiber/models/entity"
+	"github.com/marcolcu/go-resto-app/database"
+	"github.com/marcolcu/go-resto-app/models/entity"
 )
 
 func RunAboutMigrate() {
@@ -14,7 +14,7 @@ func RunAboutMigrate() {
 
 	if count == 0 {
 		// Jika tidak ada data, lakukan migrasi
-		err := database.DB.AutoMigrate(&entity.About{})
+		err := database.DB.AutoMigrate(&entity.About{}, &entity.Chef{})
 		if err != nil {
 			panic(err)
 		}

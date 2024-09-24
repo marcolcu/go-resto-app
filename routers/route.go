@@ -3,12 +3,12 @@ package routers
 import (
 	"time"
 
-	"github.com/Fabian832/Go-Fiber/controllers"
-	"github.com/Fabian832/Go-Fiber/middleware"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
+	"github.com/marcolcu/go-resto-app/controllers"
+	"github.com/marcolcu/go-resto-app/middleware"
 )
 
 func RouterApp(app *fiber.App) {
@@ -37,7 +37,9 @@ func RouterApp(app *fiber.App) {
 	app.Get("/api/menus", controllers.GetMenu)
 	app.Post("/api/reservations", controllers.CreateReservation)
 	app.Get("/api/reservations", controllers.GetReservations)
-	
+	app.Post("/api/testimonial", controllers.CreateTestimoni)
+	app.Get("/api/testimonial", controllers.UpdateTestimonialActivity)
+
 	// Grup route yang memerlukan otentikasi
 	protected := app.Group("/api", middleware.AuthMiddleware)
 
@@ -60,4 +62,6 @@ func RouterApp(app *fiber.App) {
 
 	protected.Post("/reservations/update", controllers.UpdateReservation)
 	protected.Post("/reservations/delete", controllers.DeleteReservation)
+
+	protected.Get("/all-testimonial", controllers.GetAllTestimoni)
 }

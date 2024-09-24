@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/Fabian832/Go-Fiber/database"
-	"github.com/Fabian832/Go-Fiber/database/migration"
-	"github.com/Fabian832/Go-Fiber/routers"
 	"github.com/gofiber/fiber/v2"
+	"github.com/marcolcu/go-resto-app/database"
+	"github.com/marcolcu/go-resto-app/database/migration"
+	"github.com/marcolcu/go-resto-app/routers"
 )
 
 func main() {
@@ -16,6 +16,7 @@ func main() {
 	migration.RunReservationDetailMigrate()
 	migration.RunSignatureMigrate()
 	migration.RunAboutMigrate()
+	migration.RunTestimonialMigrate()
 	app := fiber.New()
 
 	routers.RouterApp(app)

@@ -2,13 +2,14 @@ package controllers
 
 import (
 	"fmt"
-	"github.com/Fabian832/Go-Fiber/database"
-	"github.com/Fabian832/Go-Fiber/models/entity"
+	"time"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/marcolcu/go-resto-app/database"
+	"github.com/marcolcu/go-resto-app/models/entity"
 	"golang.org/x/crypto/bcrypt"
-	"time"
 )
 
 var jwtKey = []byte("your_secret_key")

@@ -4,16 +4,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Fabian832/Go-Fiber/database"
-	"github.com/Fabian832/Go-Fiber/models/entity"
 	"github.com/gofiber/fiber/v2"
+	"github.com/marcolcu/go-resto-app/database"
+	"github.com/marcolcu/go-resto-app/models/entity"
 )
 
 // CreateAbout creates a new About record
 func CreateAbout(c *fiber.Ctx) error {
-	about := new(entity.About)
-
 	// Parse JSON request body into the About struct
+	about := new(entity.About)
 	if err := c.BodyParser(about); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "Failed to parse request body",
@@ -21,7 +20,7 @@ func CreateAbout(c *fiber.Ctx) error {
 		})
 	}
 
-	// Check if the tipe_section is unique
+	// Check if tipe_section is unique
 	var existingAbout entity.About
 	if err := database.DB.Where("tipe_section = ?", about.TipeSection).First(&existingAbout).Error; err == nil {
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
@@ -29,11 +28,11 @@ func CreateAbout(c *fiber.Ctx) error {
 		})
 	}
 
-	// Set timestamps
+	// Set timestamps for the About record
 	about.CreatedAt = time.Now()
 	about.UpdatedAt = time.Now()
 
-	// Save to database
+	// Save About to the database first to get its ID
 	if err := database.DB.Create(&about).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to create about record",
@@ -41,8 +40,18 @@ func CreateAbout(c *fiber.Ctx) error {
 		})
 	}
 
+	// Handle chefs if tipe_section is 'chef'
+	if about.TipeSection == "chef" {
+		// Validate that chefs are provided
+		if about.Chefs == nil || len(about.Chefs) == 0 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "Chef details are required.",
+			})
+		}
+	}
+
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "About created successfully",
+		"message": "About and Chefs created successfully",
 		"about":   about,
 	})
 }
@@ -64,7 +73,7 @@ func GetAbout(c *fiber.Ctx) error {
 
 		// Find about record by ID
 		var about entity.About
-		if err := database.DB.First(&about, id).Error; err != nil {
+		if err := database.DB.Preload("Chefs").First(&about, id).Error; err != nil {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"message": "About record not found",
 				"error":   err.Error(),
@@ -74,12 +83,13 @@ func GetAbout(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"message": "Success Get About",
 			"about":   about,
+			"chefs":   about.Chefs, // Include chefs in the response
 		})
 	}
 
 	// Retrieve all about records if no ID is provided
 	var abouts []entity.About
-	if err := database.DB.Find(&abouts).Error; err != nil {
+	if err := database.DB.Preload("Chefs").Find(&abouts).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to retrieve about records",
 			"error":   err.Error(),
@@ -113,8 +123,8 @@ func UpdateAbout(c *fiber.Ctx) error {
 
 	var about entity.About
 
-	// Find the existing about record
-	if err := database.DB.First(&about, id).Error; err != nil {
+	// Find the existing about record with associated chefs
+	if err := database.DB.Preload("Chefs").First(&about, id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"message": "About record not found",
 			"error":   err.Error(),
@@ -140,9 +150,50 @@ func UpdateAbout(c *fiber.Ctx) error {
 		})
 	}
 
+	// Update chefs if they are provided in the request
+	if about.Chefs != nil && len(about.Chefs) > 0 {
+		for _, chef := range about.Chefs {
+			// Check if chef exists; if yes, update, otherwise create
+			var existingChef entity.Chef
+			if err := database.DB.First(&existingChef, chef.ID).Error; err == nil {
+				// Update existing chef
+				existingChef.ChefName = chef.ChefName
+				existingChef.ChefPosition = chef.ChefPosition
+				existingChef.ChefImageURL = chef.ChefImageURL
+				existingChef.UpdatedAt = time.Now()
+				if err := database.DB.Save(&existingChef).Error; err != nil {
+					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+						"message": "Failed to update chef record",
+						"error":   err.Error(),
+					})
+				}
+			} else {
+				// Create new chef if it doesn't exist
+				chef.AboutID = about.ID
+				chef.CreatedAt = time.Now()
+				chef.UpdatedAt = time.Now()
+				if err := database.DB.Create(&chef).Error; err != nil {
+					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+						"message": "Failed to create chef record",
+						"error":   err.Error(),
+					})
+				}
+			}
+		}
+	}
+
+	// Preload chefs for the response
+	if err := database.DB.Model(&about).Association("Chefs").Find(&about.Chefs); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to retrieve chefs",
+			"error":   err.Error(),
+		})
+	}
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "About updated successfully",
 		"about":   about,
+		"chefs":   about.Chefs, // Include chefs in the response
 	})
 }
 
@@ -184,6 +235,7 @@ func DeleteAbout(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "About record deleted successfully",
+		"message":       "About record deleted successfully",
+		"deleted_about": about, // Optionally include the deleted record
 	})
 }

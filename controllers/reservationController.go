@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Fabian832/Go-Fiber/database"
-	"github.com/Fabian832/Go-Fiber/models/entity"
 	"github.com/gofiber/fiber/v2"
+	"github.com/marcolcu/go-resto-app/database"
+	"github.com/marcolcu/go-resto-app/models/entity"
 )
 
 // CreateReservation handles creation of a reservation
