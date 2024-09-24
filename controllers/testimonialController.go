@@ -21,6 +21,12 @@ var deliciousKeywords = []string{
     "wajib coba",
 }
 
+var negativeKeywords = []string{
+    "gaenak",
+    "buruk",
+    "tidak enak",
+}
+
 // UpdateTestimonialActivity updates the active status of testimonials based on keywords
 func UpdateTestimonialActivity(c *fiber.Ctx) error {
     var testimonies []entity.Testimoni
@@ -48,29 +54,28 @@ func UpdateTestimonialActivity(c *fiber.Ctx) error {
             }
         }
 
-        // If the testimony is convincing and we haven't reached the limit
+        // Check for negative keywords in the description
+        for _, keyword := range negativeKeywords {
+            if strings.Contains(strings.ToLower(testimonies[i].Description), strings.ToLower(keyword)) {
+                active = false // If a negative keyword is found, set active to false
+                break // Stop checking after the first match
+            }
+        }
+
+        // Update the testimony's active status based on the checks
         if active {
-            // Only mark as active if it's not already active
-            if !testimonies[i].Active {
+            // Only mark as active if it's not already active and we haven't reached the limit
+            if !testimonies[i].Active && activeCount < 2 {
                 testimonies[i].Active = true
                 activeCount++
             }
         } else {
-            // Only mark as inactive if it is currently active
-            if testimonies[i].Active {
-                testimonies[i].Active = false
-            }
+            // If active was set to false due to negative keywords or no delicious keywords, mark it inactive
+            testimonies[i].Active = false
         }
 
-        // If we have already marked 2 as active, we can stop checking further
-        if activeCount >= 2 {
-            break
-        }
-    }
-
-    // Update the database only if there are changes
-    for j := range testimonies {
-        if err := database.DB.Save(&testimonies[j]).Error; err != nil {
+        // Save the updated testimony back to the database
+        if err := database.DB.Save(&testimonies[i]).Error; err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "message": "Failed to update testimony",
                 "error":   err.Error(),
