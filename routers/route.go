@@ -64,4 +64,6 @@ func RouterApp(app *fiber.App) {
 	protected.Post("/reservations/delete", controllers.DeleteReservation)
 
 	protected.Get("/all-testimonial", controllers.GetAllTestimoni)
+
+	protected.Get("/profit", controllers.CalculateTotalTransactionsCurrentMonth)
 }

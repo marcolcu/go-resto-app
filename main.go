@@ -17,6 +17,7 @@ func main() {
 	migration.RunSignatureMigrate()
 	migration.RunAboutMigrate()
 	migration.RunTestimonialMigrate()
+	migration.RunMonthlyTransactionMigrate()
 	app := fiber.New()
 
 	routers.RouterApp(app)
